@@ -64,7 +64,10 @@ class TuyaDiscovery(asyncio.DatagramProtocol):
         try:
             data = decrypt_udp(data)
         except Exception:  # pylint: disable=broad-except
-            data = data.decode()
+            try:
+                data = data.decode()
+            except Exception:
+                return
 
         decoded = json.loads(data)
         self.device_found(decoded)
