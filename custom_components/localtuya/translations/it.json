@@ -183,7 +183,9 @@
                     "preset_set": "Set di preset (opzionale)",
                     "eco_dp": "DP per Eco (opzionale)",
                     "eco_value": "Valore Eco (opzionale)",
-                    "heuristic_action": "Abilita azione euristica (opzionale)"
+                    "heuristic_action": "Abilita azione euristica (opzionale)",
+                    "reload": "Reload",
+                    "set_dp": "Set DP"
                 }
             }
         }

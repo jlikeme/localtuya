@@ -183,7 +183,9 @@
                     "preset_set": "Conjunto de predefinições (opcional)",
                     "eco_dp": "Eco DP (opcional)",
                     "eco_value": "Valor eco (opcional)",
-                    "heuristic_action": "Ativar ação heurística (opcional)"
+                    "heuristic_action": "Ativar ação heurística (opcional)",
+                    "reload": "Reload",
+                    "set_dp": "Set DP"
                 }
             }
         }
