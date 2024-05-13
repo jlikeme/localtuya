@@ -131,7 +131,15 @@ HVAC_FAN_MODE_SETS = {
         FAN_MEDIUM: "middle",
         FAN_HIGH: "high",
         FAN_TOP: "strong",
-    }
+    },
+    "XNW": {
+        "sleep": "1",
+        FAN_LOW: "2",
+        FAN_MEDIUM: "3",
+        FAN_HIGH: "4",
+        FAN_TOP: "5",
+        FAN_AUTO: "auto",
+    },
 }
 HVAC_SWING_MODE_SETS = {
     "True/False": {
@@ -149,16 +157,6 @@ PRESET_SETS = {
         "floor_heat": "floor_heat",
         "heat_floorheat": "heat_floorheat",
         "cold_floorcold": "cold_floorcold",
-    },
-}
-FAN_SETS = {
-    "XNW": {
-        "sleep": "1",
-        FAN_LOW: "2",
-        FAN_MEDIUM: "3",
-        FAN_HIGH: "4",
-        FAN_TOP: "5",
-        FAN_AUTO: "auto",
     },
 }
 
@@ -204,7 +202,7 @@ def flow_schema(dps):
         ),
         vol.Optional(CONF_HEURISTIC_ACTION): bool,
         vol.Optional(CONF_HVAC_FAN_MODE_DP): vol.In(dps),
-        vol.Optional(CONF_HVAC_FAN_MODE_SET): vol.In(list(FAN_SETS.keys())),
+        vol.Optional(CONF_HVAC_FAN_MODE_SET): vol.In(list(HVAC_FAN_MODE_SETS.keys())),
     }
 
 
@@ -256,8 +254,6 @@ class LocaltuyaClimate(LocalTuyaEntity, ClimateEntity):
         self._has_presets = self.has_config(CONF_ECO_DP) or self.has_config(
             CONF_PRESET_DP
         )
-        self._fan_dp = self._config.get(CONF_HVAC_FAN_MODE_DP)
-        self._fan_set = FAN_SETS.get(self._config.get(CONF_HVAC_FAN_MODE_SET), {})
         _LOGGER.debug("Initialized climate [%s]", self.name)
 
     @property
