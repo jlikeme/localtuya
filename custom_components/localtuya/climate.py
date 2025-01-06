@@ -72,6 +72,10 @@ HVAC_MODE_SETS = {
         HVACMode.HEAT: "Manual",
         HVACMode.AUTO: "Auto",
     },
+    "MANUAL/AUTO": {
+        HVACMode.HEAT: "MANUAL",
+        HVACMode.AUTO: "AUTO",
+    },
     "Manual/Program": {
         HVACMode.HEAT: "Manual",
         HVACMode.AUTO: "Program",
@@ -117,6 +121,10 @@ HVAC_ACTION_SETS = {
         HVACAction.HEATING: "Heat",
         HVACAction.IDLE: "Warming",
     },
+    "heating/warming": {
+        HVACAction.HEATING: "heating",
+        HVACAction.IDLE: "warming",
+    },
     "XNW": {
         HVACAction.HEATING: "hot",
         HVACAction.COOLING: "cold",
@@ -157,6 +165,11 @@ PRESET_SETS = {
         "floor_heat": "floor_heat",
         "heat_floorheat": "heat_floorheat",
         "cold_floorcold": "cold_floorcold",
+    },
+    "smart/holiday/hold": {
+        PRESET_AWAY: "holiday",
+        PRESET_HOME: "smart",
+        PRESET_NONE: "hold",
     },
 }
 
