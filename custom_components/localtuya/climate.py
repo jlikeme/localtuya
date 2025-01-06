@@ -23,6 +23,11 @@ from homeassistant.components.climate.const import (
     PRESET_HOME,
     PRESET_NONE,
     ClimateEntityFeature,
+    FAN_AUTO,
+    FAN_LOW,
+    FAN_MEDIUM,
+    FAN_HIGH,
+    FAN_TOP,
 )
 from homeassistant.const import (
     ATTR_TEMPERATURE,
@@ -54,6 +59,7 @@ from .const import (
     CONF_HVAC_ADD_OFF,
     CONF_FAN_SPEED_DP,
     CONF_FAN_SPEED_LIST,
+    CONF_FAN_SPEED_SET,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -124,6 +130,13 @@ DEFAULT_TEMPERATURE_STEP = PRECISION_HALVES
 MODE_WAIT = 0.1
 
 FAN_SPEEDS_DEFAULT = "auto,low,middle,high"
+FAN_SPEED_SETS_DEFAULT = {
+    FAN_AUTO: "auto",
+    FAN_LOW: "low",
+    FAN_MEDIUM: "middle",
+    FAN_HIGH: "high",
+    FAN_TOP: "strong",
+}
 
 
 def flow_schema(dps):
@@ -155,7 +168,8 @@ def flow_schema(dps):
         vol.Optional(CONF_PRESET_DP): col_to_select(dps, is_dps=True),
         vol.Optional(CONF_PRESET_SET, default={}): selector.ObjectSelector(),
         vol.Optional(CONF_FAN_SPEED_DP): col_to_select(dps, is_dps=True),
-        vol.Optional(CONF_FAN_SPEED_LIST, default=FAN_SPEEDS_DEFAULT): str,
+        # vol.Optional(CONF_FAN_SPEED_LIST, default=FAN_SPEEDS_DEFAULT): str,
+        vol.Optional(CONF_FAN_SPEED_SET, default=FAN_SPEED_SETS_DEFAULT): selector.ObjectSelector(),
         vol.Optional(CONF_TEMPERATURE_UNIT): col_to_select(SUPPORTED_TEMPERATURES),
         vol.Optional(CONF_HEURISTIC_ACTION): bool,
     }
@@ -198,6 +212,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         self._hvac_mode = None
         self._preset_mode = None
         self._hvac_action = None
+        self._fan_speed = None
         self._precision = float(self._config.get(CONF_PRECISION, DEFAULT_PRECISION))
         self._precision_target = float(
             self._config.get(CONF_TARGET_PRECISION, DEFAULT_PRECISION)
@@ -233,7 +248,10 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         self._fan_speed_dp = self._config.get(CONF_FAN_SPEED_DP)
         if fan_speeds := self._config.get(CONF_FAN_SPEED_LIST, []):
             fan_speeds = [v.lstrip() for v in fan_speeds.split(",")]
+        if fan_speeds_set := self._config.get(CONF_FAN_SPEED_SET, {}):
+            fan_speeds_set = {k.lower(): v for k, v in fan_speeds_set.copy()}
         self._fan_supported_speeds = fan_speeds
+        self._fan_supported_speeds_set = fan_speeds_set
         self._has_fan_mode = self._fan_speed_dp and self._fan_supported_speeds
 
         # Eco!?
@@ -386,9 +404,13 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         return fan_value
 
     @property
-    def fan_modes(self) -> list:
+    def fan_modes(self):
         """Return the list of available fan modes."""
-        return self._fan_supported_speeds
+        if not self._fan_supported_speeds_set:
+            return None
+
+        speeds = list(self._fan_supported_speeds_set.values())
+        return speeds
 
     async def async_set_temperature(self, **kwargs):
         """Set new target temperature."""
@@ -409,7 +431,12 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         if not self._state:
             await self._device.set_dp(True, self._dp_id)
 
-        await self._device.set_dp(fan_mode, self._fan_speed_dp)
+        new_speed = self.dp_value(self._fan_speed_dp)
+
+        if fan_mode in self._fan_supported_speeds_set:
+            new_speed = self._fan_supported_speeds_set[fan_mode]
+
+        await self._device.set_dp(new_speed, self._fan_speed_dp)
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode):
         """Set new target operation mode."""
@@ -503,6 +530,13 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
             for ha_action, tuya_value in self._conf_hvac_action_set.items():
                 if self.dp_value(CONF_HVAC_ACTION_DP) == tuya_value:
                     self._hvac_action = ha_action
+                    break
+
+        # Update speed
+        if self.has_config(CONF_FAN_SPEED_DP):
+            for ha_speed, tuya_value in self._fan_supported_speeds_set.items():
+                if self.dp_value(CONF_FAN_SPEED_DP) == tuya_value:
+                    self._fan_speed = ha_speed
                     break
 
 

@@ -146,6 +146,7 @@ CONF_HVAC_ADD_OFF = "hvac_add_off"
 CONF_ECO_DP = "eco_dp"
 CONF_ECO_VALUE = "eco_value"
 CONF_FAN_SPEED_LIST = "fan_speed_list"
+CONF_FAN_SPEED_SET = "fan_speed_set"
 
 # vacuum
 CONF_POWERGO_DP = "powergo_dp"
