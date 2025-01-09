@@ -212,7 +212,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         self._hvac_mode = None
         self._preset_mode = None
         self._hvac_action = None
-        self._fan_speed = None
+        self._fan_mode = None
         self._precision = float(self._config.get(CONF_PRECISION, DEFAULT_PRECISION))
         self._precision_target = float(
             self._config.get(CONF_TARGET_PRECISION, DEFAULT_PRECISION)
@@ -249,10 +249,10 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         if fan_speeds := self._config.get(CONF_FAN_SPEED_LIST, []):
             fan_speeds = [v.lstrip() for v in fan_speeds.split(",")]
         if fan_speeds_set := self._config.get(CONF_FAN_SPEED_SET, {}):
-            fan_speeds_set = {k.lower(): v for k, v in fan_speeds_set.copy()}
+            fan_speeds_set = {k.lower(): v for k, v in fan_speeds_set.copy().items()}
         self._fan_supported_speeds = fan_speeds
         self._fan_supported_speeds_set = fan_speeds_set
-        self._has_fan_mode = self._fan_speed_dp and self._fan_supported_speeds
+        self._has_fan_mode = self._fan_speed_dp and (self._fan_supported_speeds or self._fan_supported_speeds_set)
 
         # Eco!?
         self._eco_dp = self._config.get(CONF_ECO_DP)
@@ -399,9 +399,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
     @property
     def fan_mode(self):
         """Return the fan setting."""
-        if not (fan_value := self.dp_value(self._fan_speed_dp)):
-            return None
-        return fan_value
+        return self._fan_mode
 
     @property
     def fan_modes(self):
@@ -409,7 +407,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         if not self._fan_supported_speeds_set:
             return None
 
-        speeds = list(self._fan_supported_speeds_set.values())
+        speeds = list(self._fan_supported_speeds_set)
         return speeds
 
     async def async_set_temperature(self, **kwargs):
@@ -536,7 +534,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         if self.has_config(CONF_FAN_SPEED_DP):
             for ha_speed, tuya_value in self._fan_supported_speeds_set.items():
                 if self.dp_value(CONF_FAN_SPEED_DP) == tuya_value:
-                    self._fan_speed = ha_speed
+                    self._fan_mode = ha_speed
                     break
 
 
