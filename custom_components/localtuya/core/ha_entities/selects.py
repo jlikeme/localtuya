@@ -421,6 +421,25 @@ SELECTS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             name="Light Mode",
         ),
     ),
+    # Cat litter box
+    # https://developer.tuya.com/en/docs/iot/f?id=Kakg309qkmuit
+    "msp": (
+        LocalTuyaEntity(
+            id=DPCode.LEVEL,
+            name="Doorbell song",
+            icon="mdi:thermometer-lines",
+            custom_configs=localtuya_selector(
+                {
+                    "red": "Red",
+                    "greed": "Green",
+                    "blue": "Blue",
+                    "yellow": "Yellow",
+                    "purple": "Purple",
+                    "white": "White",
+                }
+            ),
+        ),
+    ),
     # Heater
     # https://developer.tuya.com/en/docs/iot/categoryqn?id=Kaiuz18kih0sm
     "qn": (
@@ -443,6 +462,92 @@ SELECTS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             name="Set Countdown",
             icon="mdi:timer-cog-outline",
             custom_configs=localtuya_selector(COUNT_DOWN_HOURS),
+        ),
+    ),
+    # Generic products, EV Charger
+    # https://support.tuya.com/en/help/_detail/K9g77zfmlnwal
+    "qt": (
+        LocalTuyaEntity(
+            id=DPCode.CHARGE_PATTERN,
+            name="Charge Pattern",
+            icon="mdi:car-shift-pattern",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {
+                    "netversion": "Netversion",
+                    "standalone": "Standalone",
+                    "standalone_reserved": "Standalone Reserved",
+                    "plug_and_charge": "Plug and Charge",
+                }
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.MEASUREMENT_MODEL,
+            name="Measurement Model",
+            icon="mdi:call-merge",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {"internal_meter": "Internal", "external_meter": "External"}
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.EARTH_TEST,
+            name="Earth Test",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {"enabled_energy": "Enable", "forbidden_energy": "Disable"}
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.PEN_PROTECT,
+            name="Pen Protect",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {"enabled_energy": "Enable", "forbidden_energy": "Disable"}
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.NETWORK_MODEL,
+            name="Network",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector({"LAN": "LAN", "4G": "4G"}),
+        ),
+    ),
+    # Weather Station
+    "qxj": (
+        LocalTuyaEntity(
+            id=DPCode.TEMP_UNIT_CONVERT,
+            name="Temperature unit",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector({"c": "c", "f": "f"}),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.WINDSPEED_UNIT_CONVERT,
+            name="Windspeed unit",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {"kmph": "kmph", "mph": "mph", "mps": "mps", "knots": "knots"}
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.PRESSURE_UNIT_CONVERT,
+            name="Pressure unit",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector(
+                {"hpa": "hpa", "inhg": "inhg", "mmhg": "mmhg"}
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.TIME_FORMAT,
+            name="Time Format",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector({"12Hr": "12Hr", "24Hr": "24Hr"}),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.DM,
+            name="DM",
+            entity_category=EntityCategory.CONFIG,
+            custom_configs=localtuya_selector({"D_M": "D_M", "M_D": "M_D"}),
         ),
     ),
     # Siren Alarm
@@ -531,7 +636,7 @@ SELECTS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             entity_category=EntityCategory.CONFIG,
             name="Record Mode",
             custom_configs=localtuya_selector(
-                {"1": "Record Events Only", "2": "Allways Record"}
+                {"1": "Record Events Only", "2": "Always Record"}
             ),
         ),
         LocalTuyaEntity(
@@ -710,7 +815,7 @@ SELECTS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             name="Direction",
             custom_configs=localtuya_selector(
                 {
-                    "foward": "Forward",
+                    "forward": "Forward",
                     "backward": "Backward",
                     "turn_left": "Left",
                     "turn_right": "Right",
@@ -793,6 +898,58 @@ SELECTS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             icon="mdi:timer-cog-outline",
             name="Countdown",
             custom_configs=localtuya_selector(COUNT_DOWN_HOURS),
+        ),
+        # Gratkit dryer v2 https://github.com/xZetsubou/hass-localtuya/issues/501
+        LocalTuyaEntity(
+            id=DPCode.LEDLIGHT,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:led-strip",
+            name="Light",
+            custom_configs=localtuya_selector(
+                {
+                    "0": "OFF",
+                    "1": "Red",
+                    "2": "Green",
+                    "3": "Blue",
+                    "4": "White",
+                    "5": "Yellow",
+                    "6": "Cyan",
+                    "7": "Purple",
+                    "8": "Orange",
+                    "9": "Pink",
+                    "10": "Rainbow Fade",
+                    "11": "Rainbow Blink",
+                    "12": "Rainbow Smooth",
+                    "13": "13",
+                    "14": "14",
+                    "15": "15",
+                    "16": "16",
+                    "17": "17",
+                    "18": "18",
+                    "19": "19",
+                    "20": "20",
+                }
+            ),
+        ),
+        LocalTuyaEntity(
+            id=DPCode.MATERIAL_TYPE,
+            entity_category=EntityCategory.CONFIG,
+            icon="mdi:kite-outline",
+            name="Material Type",
+            custom_configs=localtuya_selector(
+                {
+                    "PETG": "PETG",
+                    "PLA_J": "PLA_J",
+                    "PC": "PC",
+                    "TPU": "TPU",
+                    "ABS": "ABS",
+                    "DIY2": "DIY2",
+                    "PLA": "PLA",
+                    "DIY1": "DIY1",
+                    "Nylon": "Nylon",
+                    "HIPS": "HIPS",
+                }
+            ),
         ),
     ),
     # Curtain

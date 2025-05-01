@@ -1,6 +1,7 @@
 """
     This a file contains available tuya data
     https://developer.tuya.com/en/docs/iot/standarddescription?id=K9i5ql6waswzq
+
     Credits: official HA Tuya integration.
     Modified by: xZetsubou
 """
@@ -125,6 +126,42 @@ BUTTONS: dict[str, tuple[LocalTuyaEntity, ...]] = {
             id=DPCode.REMOTE_REGISTER,
             name="Pair Remote",
             icon="mdi:remote",
+            entity_category=EntityCategory.CONFIG,
+        ),
+    ),
+    # Smart Pet Feeder
+    # https://developer.tuya.com/en/docs/iot/categorycwwsq?id=Kaiuz2b6vydld
+    "cwwsq": (
+        LocalTuyaEntity(
+            id=DPCode.FACTORY_RESET,
+            name="Factory Reset",
+            icon="mdi:cog-counterclockwise",
+            entity_category=EntityCategory.CONFIG,
+        ),
+    ),
+    # Smart Pet Feeder
+    # https://developer.tuya.com/en/docs/iot/categorycwwsq?id=Kaiuz2b6vydld
+    "cwwsq": (
+        LocalTuyaEntity(
+            id=DPCode.FACTORY_RESET,
+            name="Factory Reset",
+            icon="mdi:cog-counterclockwise",
+            entity_category=EntityCategory.CONFIG,
+        ),
+    ),
+    # Cat litter box
+    # https://developer.tuya.com/en/docs/iot/f?id=Kakg309qkmuit
+    "msp": (
+        LocalTuyaEntity(
+            id=DPCode.FACTORY_RESET,
+            name="Factory Reset",
+            icon="mdi:restore",
+            entity_category=EntityCategory.CONFIG,
+        ),
+        LocalTuyaEntity(
+            id=DPCode.REBOOT,
+            name="Reboot",
+            icon="mdi:restart",
             entity_category=EntityCategory.CONFIG,
         ),
     ),
