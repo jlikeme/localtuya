@@ -583,7 +583,7 @@ class LocalTuyaEntity(RestoreEntity, pytuya.ContextualLogger):
         restore_state = self._state
 
         # If no state stored in the entity currently, go from last saved state
-        if (restore_state == STATE_UNKNOWN) | (restore_state is None):
+        if (restore_state is None) or (restore_state == STATE_UNKNOWN):
             self.debug("No current state for entity")
             restore_state = self._last_state
 
