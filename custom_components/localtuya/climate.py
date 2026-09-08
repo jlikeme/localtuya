@@ -24,11 +24,6 @@ from homeassistant.components.climate.const import (
     PRESET_HOME,
     PRESET_NONE,
     ClimateEntityFeature,
-    FAN_AUTO,
-    FAN_LOW,
-    FAN_MEDIUM,
-    FAN_HIGH,
-    FAN_TOP,
 )
 from homeassistant.const import (
     ATTR_TEMPERATURE,
@@ -135,14 +130,7 @@ DEFAULT_TEMPERATURE_STEP = PRECISION_HALVES
 # Empirically tested to work for AVATTO thermostat
 MODE_WAIT = 0.1
 
-FAN_SPEEDS_DEFAULT = "auto,low,middle,high"
-FAN_SPEED_SETS_DEFAULT = {
-    FAN_AUTO: "auto",
-    FAN_LOW: "low",
-    FAN_MEDIUM: "middle",
-    FAN_HIGH: "high",
-    FAN_TOP: "strong",
-}
+FAN_SPEEDS_DEFAULT = {"1": "Low", "2": "Medium", "3": "High"}
 
 
 def flow_schema(dps):
@@ -174,8 +162,8 @@ def flow_schema(dps):
         vol.Optional(CONF_SWING_HORIZONTAL_DP): col_to_select(dps, is_dps=True),
         vol.Optional(CONF_SWING_HORIZONTAL_MODES, default={}): ObjectSelector(),
         vol.Optional(CONF_FAN_SPEED_DP): col_to_select(dps, is_dps=True),
-        # vol.Optional(CONF_FAN_SPEED_LIST, default=FAN_SPEEDS_DEFAULT): str,
-        vol.Optional(CONF_FAN_SPEED_SET, default=FAN_SPEED_SETS_DEFAULT): ObjectSelector(),
+        vol.Optional(CONF_FAN_SPEED_LIST, default=FAN_SPEEDS_DEFAULT): ObjectSelector(),
+        vol.Optional(CONF_FAN_SPEED_SET, default={}): ObjectSelector(),
         vol.Optional(CONF_TEMPERATURE_UNIT): col_to_select(SUPPORTED_TEMPERATURES),
         vol.Optional(CONF_HEURISTIC_ACTION): bool,
     }
@@ -219,7 +207,6 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         self._hvac_mode: HVACMode | None = None
         self._hvac_action: HVACAction | None = None
         self._preset_mode: str | None = None
-        self._fan_mode = None
         self._swing_mode: str | None = None
         self._swing_horizontal_mode: str | None = None
         self._precision = float(self._config.get(CONF_PRECISION, DEFAULT_PRECISION))
@@ -253,13 +240,18 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
 
         # Fan
         self._fan_speed_dp = self._config.get(CONF_FAN_SPEED_DP)
-        if fan_speeds := self._config.get(CONF_FAN_SPEED_LIST, []):
-            fan_speeds = [v.lstrip() for v in fan_speeds.split(",")]
+        # Existing HA-to-device mappings take precedence over the upstream list.
         if fan_speeds_set := self._config.get(CONF_FAN_SPEED_SET, {}):
-            fan_speeds_set = {k.lower(): v for k, v in fan_speeds_set.copy().items()}
-        self._fan_supported_speeds = fan_speeds
-        self._fan_supported_speeds_set = fan_speeds_set
-        self._has_fan_mode = self._fan_speed_dp and (self._fan_supported_speeds or self._fan_supported_speeds_set)
+            self._fan_speeds = DictSelector(
+                {k.lower(): v for k, v in fan_speeds_set.items()}, reverse=True
+            )
+        else:
+            fan_speeds = self._config.get(CONF_FAN_SPEED_LIST, {})
+            if isinstance(fan_speeds, str):
+                fan_speeds = {
+                    v.lstrip(): v.lstrip() for v in fan_speeds.split(",") if v.strip()
+                }
+            self._fan_speeds = DictSelector(fan_speeds)
 
         # Swing configurations.
         self._swing_v_mode_dp = self._config.get(CONF_SWING_MODE_DP)
@@ -303,9 +295,7 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
             supported_features |= ClimateEntityFeature.TARGET_TEMPERATURE
         if self._has_presets:
             supported_features |= ClimateEntityFeature.PRESET_MODE
-        if self._fan_speed_dp and self._fan_supported_speeds:
-            supported_features |= ClimateEntityFeature.FAN_MODE
-        if self._has_fan_mode:
+        if self._fan_speed_dp and self._fan_speeds.names:
             supported_features |= ClimateEntityFeature.FAN_MODE
         if self._swing_v_mode_dp and self._swing_v_modes:
             supported_features |= ClimateEntityFeature.SWING_MODE
@@ -446,16 +436,14 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
     @property
     def fan_mode(self):
         """Return the fan setting."""
-        return self._fan_mode
+        if (fan_value := self.dp_value(self._fan_speed_dp)) is None:
+            return None
+        return self._fan_speeds.to_ha(fan_value)
 
     @property
     def fan_modes(self):
         """Return the list of available fan modes."""
-        if not self._fan_supported_speeds_set:
-            return None
-
-        speeds = list(self._fan_supported_speeds_set)
-        return speeds
+        return self._fan_speeds.names
 
     @property
     def swing_mode(self) -> str | None:
@@ -508,12 +496,9 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         if not self._is_on:
             await self._device.set_dp(self._state_on, self._dp_id)
 
-        new_speed = self.dp_value(self._fan_speed_dp)
-
-        if fan_mode in self._fan_supported_speeds_set:
-            new_speed = self._fan_supported_speeds_set[fan_mode]
-
-        await self._device.set_dp(new_speed, self._fan_speed_dp)
+        await self._device.set_dp(
+            self._fan_speeds.to_tuya(fan_mode), self._fan_speed_dp
+        )
 
     async def async_set_hvac_mode(self, hvac_mode: HVACMode):
         """Set new target operation mode."""
@@ -605,13 +590,6 @@ class LocalTuyaClimate(LocalTuyaEntity, ClimateEntity):
         # Update the current action
         if (action := self.dp_value(CONF_HVAC_ACTION_DP)) is not None:
             self._hvac_action = self._hvac_action_set.to_ha(action)
-
-        # Update speed
-        if self.has_config(CONF_FAN_SPEED_DP):
-            for ha_speed, tuya_value in self._fan_supported_speeds_set.items():
-                if self.dp_value(CONF_FAN_SPEED_DP) == tuya_value:
-                    self._fan_mode = ha_speed
-                    break
 
 
 async_setup_entry = partial(async_setup_entry, DOMAIN, LocalTuyaClimate, flow_schema)
